@@ -49,11 +49,11 @@ npm install node-red-node-pi-gpio
 ### 3. Configure GPIO Pins (if needed)
 
 The flow is pre-configured with the following GPIO pins (BCM numbering):
-- Button 1: GPIO17 (Physical pin 11)
-- Button 2: GPIO27 (Physical pin 13)
-- Button 3: GPIO22 (Physical pin 15)
-- Button 4: GPIO5 (Physical pin 29)
-- Reset Button: GPIO6 (Physical pin 31)
+- Button 1: GPIO22 (Physical pin 15)
+- Button 2: GPIO23 (Physical pin 16)
+- Button 3: GPIO24 (Physical pin 18)
+- Button 4: GPIO25 (Physical pin 22)
+- Reset Button: GPIO26 (Physical pin 37)
 
 If you need to use different pins:
 1. Double-click on each "rpi-gpio in" node

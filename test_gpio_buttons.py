@@ -15,11 +15,11 @@ import os
 import subprocess
 
 # GPIO pin configuration (BCM numbering)
-BUTTON1_PIN = 17  # Physical pin 11
-BUTTON2_PIN = 27  # Physical pin 13
-BUTTON3_PIN = 22  # Physical pin 15
-BUTTON4_PIN = 5   # Physical pin 29
-RESET_PIN = 6     # Physical pin 31
+BUTTON1_PIN = 22  # Physical pin 15
+BUTTON2_PIN = 23  # Physical pin 16
+BUTTON3_PIN = 24  # Physical pin 18
+BUTTON4_PIN = 25  # Physical pin 22
+RESET_PIN = 26    # Physical pin 37
 
 # MP3 file path
 MP3_FILE = "/home/admin/Music/mystery_unlocked.mp3"
