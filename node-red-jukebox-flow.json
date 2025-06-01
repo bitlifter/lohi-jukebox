@@ -1,0 +1,564 @@
+[
+    {
+        "id": "f6f2187d.f17ca8",
+        "type": "tab",
+        "label": "Jukebox Escape Room",
+        "disabled": false,
+        "info": "# Jukebox Escape Room Automation\n\nThis flow handles the logic for a 1953 EMI jukebox integrated into an escape room art project.\n\n## Logic:\n1. When each of the four buttons is pressed at least once\n2. Play an MP3 file\n3. Reset the system automatically after playback\n4. A fifth button manually resets the system"
+    },
+    {
+        "id": "b5d396c2.2e7b68",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "Initialize on Deploy",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 80,
+        "wires": [
+            [
+                "c7e3d0a9.3a0e5"
+            ]
+        ]
+    },
+    {
+        "id": "c7e3d0a9.3a0e5",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Initialize Button States",
+        "func": "// Initialize all button states to false\nflow.set('button1Pressed', false);\nflow.set('button2Pressed', false);\nflow.set('button3Pressed', false);\nflow.set('button4Pressed', false);\n\n// Send a message to the debug node\nmsg.payload = \"Button states initialized to false\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 80,
+        "wires": [
+            [
+                "d8058a3b.5d1e58"
+            ]
+        ]
+    },
+    {
+        "id": "d8058a3b.5d1e58",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "Initialization Status",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 620,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "a4b0c01a.6f9c5",
+        "type": "rpi-gpio in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Button 1 (GPIO22)",
+        "pin": "15",
+        "intype": "down",
+        "debounce": "25",
+        "read": false,
+        "bcm": true,
+        "x": 150,
+        "y": 160,
+        "wires": [
+            [
+                "e9c2f61b.bfcf18"
+            ]
+        ]
+    },
+    {
+        "id": "e9c2f61b.bfcf18",
+        "type": "delay",
+        "z": "f6f2187d.f17ca8",
+        "name": "Debounce",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 320,
+        "y": 160,
+        "wires": [
+            [
+                "f6c0a9d2.4c8b58"
+            ]
+        ]
+    },
+    {
+        "id": "f6c0a9d2.4c8b58",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Set Button 1 Pressed",
+        "rules": [
+            {
+                "t": "set",
+                "p": "button1Pressed",
+                "pt": "flow",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "set",
+                "p": "buttonName",
+                "pt": "msg",
+                "to": "Button 1",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 520,
+        "y": 160,
+        "wires": [
+            [
+                "3a7c0a7c.b5c5d6",
+                "7e9e350d.83bcec"
+            ]
+        ]
+    },
+    {
+        "id": "3a7c0a7c.b5c5d6",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "Button Press Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 760,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "7e9e350d.83bcec",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Check All Buttons & Trigger MP3",
+        "func": "// Get the current state of all buttons\nconst button1Pressed = flow.get('button1Pressed') || false;\nconst button2Pressed = flow.get('button2Pressed') || false;\nconst button3Pressed = flow.get('button3Pressed') || false;\nconst button4Pressed = flow.get('button4Pressed') || false;\n\n// Add to debug info which button was just pressed\nconst buttonName = msg.buttonName || \"Unknown Button\";\nmsg.debug = `${buttonName} was pressed. Current state: Button1=${button1Pressed}, Button2=${button2Pressed}, Button3=${button3Pressed}, Button4=${button4Pressed}`;\n\n// Check if all buttons have been pressed\nif (button1Pressed && button2Pressed && button3Pressed && button4Pressed) {\n    // All buttons have been pressed, prepare to play MP3\n    msg.payload = \"mpg123 /home/admin/Music/mystery_unlocked.mp3\";\n    \n    // Reset all button states to false (automatic reset)\n    flow.set('button1Pressed', false);\n    flow.set('button2Pressed', false);\n    flow.set('button3Pressed', false);\n    flow.set('button4Pressed', false);\n    \n    msg.debug += \" - All buttons pressed! Playing MP3 and resetting.\";\n    \n    // Return the message to trigger MP3 playback\n    return [msg, null];\n} else {\n    // Not all buttons have been pressed yet\n    return [null, msg];\n}\n",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 340,
+        "wires": [
+            [
+                "a5d396c2.2e7b68"
+            ],
+            [
+                "d9058a3b.5d1e58"
+            ]
+        ]
+    },
+    {
+        "id": "a5d396c2.2e7b68",
+        "type": "exec",
+        "z": "f6f2187d.f17ca8",
+        "command": "",
+        "addpay": "payload",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "Play MP3",
+        "x": 780,
+        "y": 320,
+        "wires": [
+            [
+                "b9058a3b.5d1e58"
+            ],
+            [
+                "b9058a3b.5d1e58"
+            ],
+            [
+                "b9058a3b.5d1e58"
+            ]
+        ]
+    },
+    {
+        "id": "b9058a3b.5d1e58",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "MP3 Playback Status",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1000,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "d9058a3b.5d1e58",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "Button Check Status",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "debug",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 800,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "b4b0c01a.6f9c5",
+        "type": "rpi-gpio in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Button 2 (GPIO23)",
+        "pin": "16",
+        "intype": "down",
+        "debounce": "25",
+        "read": false,
+        "bcm": true,
+        "x": 150,
+        "y": 200,
+        "wires": [
+            [
+                "f9c2f61b.bfcf18"
+            ]
+        ]
+    },
+    {
+        "id": "f9c2f61b.bfcf18",
+        "type": "delay",
+        "z": "f6f2187d.f17ca8",
+        "name": "Debounce",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 320,
+        "y": 200,
+        "wires": [
+            [
+                "e6c0a9d2.4c8b58"
+            ]
+        ]
+    },
+    {
+        "id": "e6c0a9d2.4c8b58",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Set Button 2 Pressed",
+        "rules": [
+            {
+                "t": "set",
+                "p": "button2Pressed",
+                "pt": "flow",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "set",
+                "p": "buttonName",
+                "pt": "msg",
+                "to": "Button 2",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 520,
+        "y": 200,
+        "wires": [
+            [
+                "3a7c0a7c.b5c5d6",
+                "7e9e350d.83bcec"
+            ]
+        ]
+    },
+    {
+        "id": "c4b0c01a.6f9c5",
+        "type": "rpi-gpio in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Button 3 (GPIO24)",
+        "pin": "18",
+        "intype": "down",
+        "debounce": "25",
+        "read": false,
+        "bcm": true,
+        "x": 150,
+        "y": 240,
+        "wires": [
+            [
+                "d9c2f61b.bfcf18"
+            ]
+        ]
+    },
+    {
+        "id": "d9c2f61b.bfcf18",
+        "type": "delay",
+        "z": "f6f2187d.f17ca8",
+        "name": "Debounce",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 320,
+        "y": 240,
+        "wires": [
+            [
+                "d6c0a9d2.4c8b58"
+            ]
+        ]
+    },
+    {
+        "id": "d6c0a9d2.4c8b58",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Set Button 3 Pressed",
+        "rules": [
+            {
+                "t": "set",
+                "p": "button3Pressed",
+                "pt": "flow",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "set",
+                "p": "buttonName",
+                "pt": "msg",
+                "to": "Button 3",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 520,
+        "y": 240,
+        "wires": [
+            [
+                "3a7c0a7c.b5c5d6",
+                "7e9e350d.83bcec"
+            ]
+        ]
+    },
+    {
+        "id": "d4b0c01a.6f9c5",
+        "type": "rpi-gpio in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Button 4 (GPIO25)",
+        "pin": "22",
+        "intype": "down",
+        "debounce": "25",
+        "read": false,
+        "bcm": true,
+        "x": 150,
+        "y": 280,
+        "wires": [
+            [
+                "c9c2f61b.bfcf18"
+            ]
+        ]
+    },
+    {
+        "id": "c9c2f61b.bfcf18",
+        "type": "delay",
+        "z": "f6f2187d.f17ca8",
+        "name": "Debounce",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 320,
+        "y": 280,
+        "wires": [
+            [
+                "c6c0a9d2.4c8b58"
+            ]
+        ]
+    },
+    {
+        "id": "c6c0a9d2.4c8b58",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Set Button 4 Pressed",
+        "rules": [
+            {
+                "t": "set",
+                "p": "button4Pressed",
+                "pt": "flow",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "set",
+                "p": "buttonName",
+                "pt": "msg",
+                "to": "Button 4",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 520,
+        "y": 280,
+        "wires": [
+            [
+                "3a7c0a7c.b5c5d6",
+                "7e9e350d.83bcec"
+            ]
+        ]
+    },
+    {
+        "id": "e4b0c01a.6f9c5",
+        "type": "rpi-gpio in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Reset Button (GPIO26)",
+        "pin": "37",
+        "intype": "down",
+        "debounce": "25",
+        "read": false,
+        "bcm": true,
+        "x": 160,
+        "y": 440,
+        "wires": [
+            [
+                "b9c2f61b.bfcf18"
+            ]
+        ]
+    },
+    {
+        "id": "b9c2f61b.bfcf18",
+        "type": "delay",
+        "z": "f6f2187d.f17ca8",
+        "name": "Debounce",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 320,
+        "y": 440,
+        "wires": [
+            [
+                "b6c0a9d2.4c8b58"
+            ]
+        ]
+    },
+    {
+        "id": "b6c0a9d2.4c8b58",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Manual Reset",
+        "func": "// Reset all button states to false\nflow.set('button1Pressed', false);\nflow.set('button2Pressed', false);\nflow.set('button3Pressed', false);\nflow.set('button4Pressed', false);\n\n// Send a message to the debug node\nmsg.payload = \"Manual reset triggered - all button states reset to false\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 500,
+        "y": 440,
+        "wires": [
+            [
+                "c9058a3b.5d1e58"
+            ]
+        ]
+    },
+    {
+        "id": "c9058a3b.5d1e58",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "Reset Status",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 680,
+        "y": 440,
+        "wires": []
+    }
+]
